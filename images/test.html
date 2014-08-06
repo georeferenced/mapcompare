@@ -1,0 +1,181 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=7, IE=9">
+    <title></title>
+    <link rel="stylesheet" type="text/css" href="http://servicesbeta.esri.com/jsapi/arcgis/3.4/js/dojo/dijit/themes/tundra/tundra.css">
+    <link rel="stylesheet" type="text/css" href="http://servicesbeta.esri.com/jsapi/arcgis/3.4/js/esri/css/esri.css" />
+    <link rel="stylesheet" type="text/css" href="css/layout.css"/>
+
+     <script type="text/javascript">
+      var dojoConfig = {
+		  parseOnLoad: true,
+		  packages:[
+			{name:"esriTemplate",location:location.pathname.replace(/\/[^/]+$/, '/')}
+		  ]
+		};
+    </script>
+	
+    <script type="text/javascript" src="http://servicesbeta.esri.com/jsapi/arcgis/?v=3.4compact"></script>
+    <script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.7.1.min.js"></script>
+    <script type="text/javascript" src="javascript/map.js"></script>
+    <script type="text/javascript" src="javascript/layout.js"></script>
+	<script type="text/javascript" src="javascript/myChanges_new.js"></script>
+
+    <script type="text/javascript">
+		var configOptions;
+		function assignconfigOptions() {
+			 configOptions = {
+				//The ID for the map from ArcGIS.com. Maximum of 3 maps.
+				  webmaps : [
+					{'id': myMapNames[0][1]},
+					{'id': myMapNames[1][1]},
+					{'id': myMapNames[2][1]},
+					{'id': myMapNames[3][1]},
+					{'id': myMapNames[4][1]}
+					],
+				//Enter a title, if no title is specified, the webmap's title is used.
+				title : "Storymap comparison with dropbox selectors",
+				//Enter a subtitle, if not specified the ArcGIS.com web map's summary is used
+				subtitle : "Template for comparing multiple maps two-at-a-time. Remaining coding issue: Map resizing and the i18n toggle viewer do not work well with the two div (left/right) layout needed for multiple-map comparison. See esri 2-map comparison: <a href=\"http:\/\/storymaps.esri.com/templates/compare\" style=\"color:DodgerBlue;\">http://storymaps.esri.com/templates/compare</a>",
+				//Display legend on map
+				legend : true,
+				//Display description on map
+				description : true,
+				//If the webmap uses Bing Maps data, you will need to provided your Bing Maps Key
+				bingmapskey : "",
+				//specify a proxy url if neededmysell
+				
+				proxyurl:"",
+				//specify the url to a geometry service
+				geometryserviceurl:"http://tasks.arcgisonline.com/ArcGIS/rest/services/Geometry/GeometryServer",
+			   //Modify this to point to your sharing service URL if you are using the portal
+				sharingurl :"http://arcgis.com/sharing/content/items"
+			 };
+			 initMap();
+		};
+		//show map on load
+		dojo.addOnLoad(init);
+    </script>
+
+    <style type="text/css">
+	  .esriLegendServiceLabel{
+	  display:none;
+	  }
+	</style>
+
+  </head>
+
+     <body class="tundra">
+        <div id="mainWindow" dojoType="dijit.layout.BorderContainer" design="headline"
+        gutters="false" style="width:100%; height:100%;">
+
+		<!-- Header Section-->
+			<div id="header" dojoType="dijit.layout.BorderContainer" gutters="false" region="top">
+				<div id="banner" dojoType="dijit.layout.ContentPane" region="top">
+					<div id="headerText">
+						<div id="title"></div>
+						<div id="subtitle"></div>
+					</div>
+					<div id="logoArea">
+					</div>
+				</div>
+				<div id="controls" dojoType="dijit.layout.ContentPane" region="center">
+					<span id="syncHead"></span>: <span id="scaleCheck" class="checkboxToggle"><span id="syncScale" class="checkbox checked">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span id="scale"></span></span>&nbsp;&nbsp;<span id="locCheck" class="checkboxToggle"><span id="syncLoc" class="checkbox checked">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span id="location"></span></span>
+				</div>
+				<div id="mapTitles" dojotype="dijit.layout.BorderContainer" gutters="false" region="bottom">
+					<!-- Map Titles Placeholder-->
+
+					<!-- Dropbox Section -->
+					<div id="selDivL" class="mySelDiv" dojoType="dijit.layout.ContentPane"  region="left">
+						<select id="select0" class="mySelect" data-dojo-type="dijit.form.Select" title="Select Map to Compare" 
+						name="select0" onChange="updateScreen('select0','left')" ></select>
+					</div>
+					<div id="selDivR" class="mySelDiv" dojoType="dijit.layout.ContentPane"  region="right" >
+						<select id="select1" class="mySelect" data-dojo-type="dijit.form.Select" title="Select Map to Compare" 
+						name="select1" onChange="updateScreen('select1','right')" ></select>
+					</div>	
+				</div>			
+			</div>
+
+			 <div id="mapContainer" dojoType="dijit.layout.BorderContainer" region="center" gutters="false" dir="ltr">
+				<div id="leftCon"  dojoType="dijit.layout.ContentPane"  region="left" style="width:50%; float:right;">
+					<div class="mapPlaceholder" id="mapPlace1"></div>
+				</div>
+				<div id="rightCon" dojoType="dijit.layout.ContentPane" region="right" style="width:50%;">	
+					<div class="mapPlaceholder" id="mapPlace2"></div>
+				</div>
+			</div>	
+		</div>
+
+		<div id="myToggles">
+			<div id="legToggle0" class="legToggle" onClick="legendToggle()"><span id="legText"></span> ▼</div>
+			<div id="desToggle0" class="desToggle" onClick="descriptionToggle()"><span id="desText"></span> ▼</div>		
+		</div>
+		<div id="myMapContainers">			
+          	<div id="mapCon0" class="mapCon"  dojotype="dijit.layout.ContentPane" region="left" > 
+				<div id="legendCon0" class="legendCon">
+					<div id="legend0" class="legend" dir="ltr"></div>
+				</div>
+				<div id="mapDiv0" class="map"></div>
+				<div id="discriptionCon0" class="descriptionCon">
+					<div id="description0" class="description" dir="ltr"></div>
+				</div>
+			</div>
+				
+			<div id="mapCon1" class="mapCon" dojotype="dijit.layout.ContentPane" region="left" >
+				<div id="legendCon1" class="legendCon">
+					<div id="legend1" class="legend" dir="ltr"></div>
+				</div>
+				<div id="mapDiv1" class="map"></div>
+				<div id="descriptionCon1" class="descriptionCon">
+					<div id="description1" class="description" dir="ltr"></div>
+				</div>
+			</div>
+				
+			<div id="mapCon2" class="mapCon"  dojotype="dijit.layout.ContentPane" region="left" >
+				<div id="legendCon2" class="legendCon">
+					<div id="legend2" class="legend" dir="ltr"></div>
+				</div>
+				<div id="mapDiv2" class="map">
+				</div>
+				<div id="descriptionCon2" class="descriptionCon" >
+					<div id="description2" class="description" dir="ltr"></div>
+				</div>
+			</div>
+			
+			<div id="mapCon3" class="mapCon"  dojotype="dijit.layout.ContentPane" region="left" >
+				<div id="legendCon3" class="legendCon">
+					<div id="legend3" class="legend" dir="ltr"></div>
+				</div>
+				<div id="mapDiv3" class="map">
+				</div>
+				<div id="descriptionCon3" class="descriptionCon" region="left" >
+					<div id="description3" class="description" dir="ltr"></div>
+				</div>
+			</div>
+
+			<div id="mapCon4" class="mapCon"  dojotype="dijit.layout.ContentPane" region="left" >
+				<div id="legendCon4" class="legendCon">
+					<div id="legend4" class="legend" dir="ltr"></div>
+				</div>
+				<div id="mapDiv4" class="map">
+				</div>
+				<div id="descriptionCon4" class="descriptionCon">
+					<div id="description4" class="description" dir="ltr"></div>
+				</div>
+			</div>
+		</div>
+        <!--Loading Panel-->
+        <div id="loadingCon">
+    		<div id="loadingDialog">
+     			<div id="loadingHeader"></div>
+     			<div id="loading"><span id="loadText"></span><br />
+					<img id="loadingImg" alt="" src="images/progressBar.gif">
+    		    </div>
+   		    </div>
+ 		 </div>
+	</body>
+
+  </html>
